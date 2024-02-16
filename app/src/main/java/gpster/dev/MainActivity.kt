@@ -4,6 +4,7 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import gpster.dev.databinding.ActivityMainBinding
 
+
 class MainActivity : AppCompatActivity() {
     private var mBinding : ActivityMainBinding ?= null
     private val binding : ActivityMainBinding get() = requireNotNull(mBinding)

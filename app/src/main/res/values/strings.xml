@@ -1,3 +1,17 @@
 <resources>
     <string name="app_name">GPSter</string>
+
+    <string name="zero_short">0.0</string>
+    <string name="zero_long">00.0000</string>
+
+    <string name="search">찾는 장소를 입력하세요</string>
+
+    <string name="start">시작</string>
+    <string name="end">종료</string>
+
+    <string name="loc">위치:</string>
+    <string name="lat">위도:</string>
+    <string name="lon">경도:</string>
+    <string name="alt">고도:</string>
+    <string name="speed">속도:</string>
 </resources>

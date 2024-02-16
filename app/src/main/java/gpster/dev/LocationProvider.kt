@@ -19,7 +19,7 @@ class LocationProvider(
     private val context : Context
 ) {
     companion object {
-        const val LOCATION_PERMISSION_REQUEST_CODE = 123
+        const val LOCATION_PERMISSION_REQUEST_CODE = 0
     }
 
     init {

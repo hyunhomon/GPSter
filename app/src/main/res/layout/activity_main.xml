@@ -1,13 +1,292 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout
     xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
 
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
+    android:gravity="top"
+
+    android:paddingVertical="24dp"
+    android:paddingHorizontal="12dp"
 
     tools:context=".MainActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="top"
+
+        android:background="@drawable/bg_location_info"
+
+        android:paddingVertical="20dp"
+        android:paddingHorizontal="16dp">
+
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:gravity="top">
+
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:id="@+id/tv_location"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_marginEnd="8dp"
+
+                    android:text="@string/lat"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium"/>
+                <TextView
+                    android:id="@+id/tv_lat"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="visible"
+
+                    android:text="@string/zero_long"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium" />
+                <EditText
+                    android:id="@+id/et_lat"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="gone"
+                    android:inputType="number"
+                    android:background="@android:color/transparent"
+
+                    android:hint="@string/zero_long"
+                    android:textSize="20sp"
+                    android:textColorHint="@color/gray1"
+                    android:fontFamily="@font/pretendard_medium" />
+
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_lon"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_marginEnd="8dp"
+
+                    android:text="@string/lon"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium"/>
+                <TextView
+                    android:id="@+id/tv_lon"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="visible"
+
+                    android:text="@string/zero_long"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium" />
+                <EditText
+                    android:id="@+id/et_lon"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="gone"
+                    android:inputType="number"
+                    android:background="@android:color/transparent"
+
+                    android:hint="@string/zero_long"
+                    android:textSize="20sp"
+                    android:textColorHint="@color/gray1"
+                    android:fontFamily="@font/pretendard_medium" />
+
+            </LinearLayout>
+            <LinearLayout
+                android:id="@+id/ll_alt"
+
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_marginEnd="8dp"
+
+                    android:text="@string/alt"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium"/>
+                <TextView
+                    android:id="@+id/tv_alt"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="visible"
+
+                    android:text="@string/zero_short"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium" />
+                <EditText
+                    android:id="@+id/et_alt"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="gone"
+                    android:inputType="number"
+                    android:background="@android:color/transparent"
+
+                    android:hint="@string/zero_short"
+                    android:textSize="20sp"
+                    android:textColorHint="@color/gray1"
+                    android:fontFamily="@font/pretendard_medium" />
+
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal"
+                android:gravity="center_vertical">
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:layout_marginEnd="8dp"
+
+                    android:text="@string/speed"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium"/>
+                <TextView
+                    android:id="@+id/tv_speed"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="visible"
+
+                    android:text="@string/zero_short"
+                    android:textSize="20sp"
+                    android:textColor="@color/black"
+                    android:fontFamily="@font/pretendard_medium" />
+                <EditText
+                    android:id="@+id/et_speed"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+
+                    android:visibility="gone"
+                    android:inputType="number"
+                    android:background="@android:color/transparent"
+
+                    android:hint="@string/zero_short"
+                    android:textSize="20sp"
+                    android:textColorHint="@color/gray1"
+                    android:fontFamily="@font/pretendard_medium" />
+
+            </LinearLayout>
+
+        </LinearLayout>
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        <ImageView
+            android:id="@+id/iv_zoom"
+
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_zoom_in" />
+        <ImageView
+            android:id="@+id/iv_edit"
+
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:layout_marginStart="8dp"
+            android:src="@drawable/ic_edit" />
+
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="horizontal"
+        android:gravity="center_vertical"
+
+        android:background="@drawable/bg_search"
+
+        android:layout_marginVertical="8dp"
+
+        android:paddingVertical="12dp"
+        android:paddingHorizontal="16dp">
+
+        <EditText
+            android:id="@+id/et_search"
+
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+
+            android:inputType="text"
+            android:background="@android:color/transparent"
+
+            android:hint="@string/search"
+            android:textSize="16sp"
+            android:textColorHint="@color/gray1"
+            android:fontFamily="@font/pretendard_regular" />
+        <View
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+        <ImageView
+            android:id="@+id/iv_search"
+
+            android:layout_width="24dp"
+            android:layout_height="24dp"
+            android:src="@drawable/ic_search" />
+
+    </LinearLayout>
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+    <Button
+        android:id="@+id/btn_overlay"
+
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+
+        android:background="@drawable/bg_btn_overlay"
+
+        android:text="@string/start"
+        android:textSize="20sp"
+        android:textColor="@color/white"
+        android:fontFamily="@font/pretendard_medium" />
 
 </LinearLayout>
