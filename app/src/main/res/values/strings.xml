@@ -3,6 +3,7 @@
 
     <string name="zero_short">0.0</string>
     <string name="zero_long">00.0000</string>
+    <string name="speed_default">10.0 km/h</string>
 
     <string name="search">찾는 장소를 입력하세요</string>
 

@@ -21,8 +21,7 @@
 
         android:background="@drawable/bg_location_info"
 
-        android:paddingVertical="20dp"
-        android:paddingHorizontal="16dp">
+        android:padding="16dp">
 
         <LinearLayout
             android:layout_width="wrap_content"
@@ -54,8 +53,6 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
 
-                    android:visibility="visible"
-
                     android:text="@string/zero_long"
                     android:textSize="20sp"
                     android:textColor="@color/black"
@@ -68,9 +65,42 @@
 
                     android:visibility="gone"
                     android:inputType="number"
+                    android:imeOptions="actionNext"
                     android:background="@android:color/transparent"
 
                     android:hint="@string/zero_long"
+                    android:textSize="20sp"
+                    android:textColorHint="@color/gray1"
+                    android:fontFamily="@font/pretendard_medium" />
+                <EditText
+                    android:id="@+id/et_loc0"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+
+                    android:visibility="gone"
+                    android:inputType="number"
+                    android:imeOptions="actionNext"
+                    android:background="@android:color/transparent"
+
+                    android:hint="@string/zero_long"
+                    android:textSize="20sp"
+                    android:textColorHint="@color/gray1"
+                    android:fontFamily="@font/pretendard_medium" />
+                <EditText
+                    android:id="@+id/et_loc1"
+
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_marginStart="8dp"
+
+                    android:visibility="gone"
+                    android:inputType="number"
+                    android:imeOptions="actionNext"
+                    android:background="@android:color/transparent"
+
+                    android:hint="@string/zero_short"
                     android:textSize="20sp"
                     android:textColorHint="@color/gray1"
                     android:fontFamily="@font/pretendard_medium" />
@@ -82,7 +112,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+
+                android:layout_marginVertical="8dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -114,6 +146,7 @@
 
                     android:visibility="gone"
                     android:inputType="number"
+                    android:imeOptions="actionNext"
                     android:background="@android:color/transparent"
 
                     android:hint="@string/zero_long"
@@ -160,6 +193,7 @@
 
                     android:visibility="gone"
                     android:inputType="number"
+                    android:imeOptions="actionNext"
                     android:background="@android:color/transparent"
 
                     android:hint="@string/zero_short"
@@ -172,7 +206,9 @@
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
                 android:orientation="horizontal"
-                android:gravity="center_vertical">
+                android:gravity="center_vertical"
+
+                android:layout_marginTop="8dp">
 
                 <TextView
                     android:layout_width="wrap_content"
@@ -192,7 +228,7 @@
 
                     android:visibility="visible"
 
-                    android:text="@string/zero_short"
+                    android:text="@string/speed_default"
                     android:textSize="20sp"
                     android:textColor="@color/black"
                     android:fontFamily="@font/pretendard_medium" />
@@ -204,6 +240,7 @@
 
                     android:visibility="gone"
                     android:inputType="number"
+                    android:imeOptions="actionDone"
                     android:background="@android:color/transparent"
 
                     android:hint="@string/zero_short"
@@ -282,7 +319,7 @@
         android:layout_height="wrap_content"
         android:layout_marginTop="8dp"
 
-        android:background="@drawable/bg_btn_overlay"
+        android:background="@drawable/bg_btn_overlay_start"
 
         android:text="@string/start"
         android:textSize="20sp"
