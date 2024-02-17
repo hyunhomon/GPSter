@@ -5,7 +5,6 @@ import android.content.pm.PackageManager
 import android.Manifest
 import android.app.Activity
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import android.location.provider.ProviderProperties
 import android.os.SystemClock
@@ -42,17 +41,6 @@ class MyLocationProvider(
             lm.setTestProviderLocation(providerName, mockLocation)
         }
         catch (e: RuntimeException) {
-            e.printStackTrace()
-        }
-    }
-
-    fun updateLocation(listener: LocationListener) {
-        try {
-            val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            lm.requestLocationUpdates(
-                providerName, 0, 0f, listener
-            )
-        } catch (e: SecurityException) {
             e.printStackTrace()
         }
     }

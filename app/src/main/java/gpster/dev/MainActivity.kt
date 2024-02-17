@@ -1,8 +1,8 @@
 package gpster.dev
 
+import android.content.Context
 import android.content.Intent
 import android.location.Location
-import android.location.LocationListener
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
@@ -18,10 +18,10 @@ class MainActivity : AppCompatActivity() {
     private val binding : ActivityMainBinding get() = requireNotNull(mBinding)
 
     private lateinit var providerName : String
+    private lateinit var locationManager : LocationManager
     private lateinit var locationProvider : MyLocationProvider
-    private lateinit var locationChecker: MyLocationChecker
-    private lateinit var locationListener: MyLocationListener
-    private lateinit var utilityProvider: UtilityProvider
+    private lateinit var locationChecker : MyLocationChecker
+    private lateinit var utilityProvider : UtilityProvider
 
     private var isRunning = false
     private var isExpanded = true
@@ -30,13 +30,15 @@ class MainActivity : AppCompatActivity() {
     private var lat = 0.0
     private var lon = 0.0
     private var alt = 0.0
-    private var speed = 10.0
+    private var speed = 0.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+    }
 
+    private fun setup() {
         locationChecker = MyLocationChecker(this@MainActivity)
 
         if(locationChecker.isLocationEnabled()) {
@@ -48,14 +50,15 @@ class MainActivity : AppCompatActivity() {
         }
 
         providerName = LocationManager.GPS_PROVIDER
-//        locationProvider = MyLocationProvider(providerName, this)
-        locationListener = MyLocationListener()
-//        locationProvider.updateLocation(locationListener)
+        locationManager = this@MainActivity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+//        locationProvider = MyLocationProvider(providerName, this@MainActivity)
         utilityProvider = UtilityProvider(this@MainActivity)
+        speed = utilityProvider.getSpeed()
 
         binding.root.setOnClickListener() {
             utilityProvider.hideKeyboard(this@MainActivity)
         }
+        requestLocation()
     }
 
     private fun setupEt() {
@@ -146,31 +149,64 @@ class MainActivity : AppCompatActivity() {
                 }
                 isEditOpen = true
             } else {
+                utilityProvider.hideKeyboard(this@MainActivity)
                 binding.ivZoom.visibility = View.VISIBLE
+
+                lat = utilityProvider.parseToDouble(binding.etLat.text.toString(), -90.0, 90.0, lat)
+                speed = utilityProvider.parseToDouble(binding.etSpeed.text.toString(), 0.0, 100.0, speed)
+
                 if(!isExpanded) {
+                    lon = utilityProvider.parseToDouble(binding.etLoc0.text.toString(), -180.0, 180.0, lon)
+                    alt = utilityProvider.parseToDouble(binding.etLoc1.text.toString(), 0.0, 9999.9, alt)
+
                     binding.apply {
                         tvLat.visibility = View.VISIBLE
-                        etLat.visibility = View.GONE
-                        etLoc0.visibility = View.GONE
-                        etLoc1.visibility = View.GONE
+                        etLat.apply {
+                            visibility = View.GONE
+                            setText("")
+                        }
+                        etLoc0.apply {
+                            visibility = View.GONE
+                            setText("")
+                        }
+                        etLoc1.apply {
+                            visibility = View.GONE
+                            setText("")
+                        }
                     }
                 } else {
+                    lon = utilityProvider.parseToDouble(binding.etLon.text.toString(), -180.0, 180.0, lon)
+                    alt = utilityProvider.parseToDouble(binding.etAlt.text.toString(), 0.0, 9999.9, alt)
+
                     binding.apply {
                         tvLat.visibility = View.VISIBLE
                         tvLon.visibility = View.VISIBLE
                         tvAlt.visibility = View.VISIBLE
-                        etLat.visibility = View.GONE
-                        etLon.visibility = View.GONE
-                        etAlt.visibility = View.GONE
+                        etLat.apply {
+                            visibility = View.GONE
+                            setText("")
+                        }
+                        etLon.apply {
+                            visibility = View.GONE
+                            setText("")
+                        }
+                        etAlt.apply {
+                            visibility = View.GONE
+                            setText("")
+                        }
                     }
                 }
 
                 binding.apply {
                     tvSpeed.visibility = View.VISIBLE
-                    etSpeed.visibility = View.GONE
+                    etSpeed.apply {
+                        visibility = View.GONE
+                        setText("")
+                    }
                     ivEdit.setImageResource(R.drawable.ic_edit)
                 }
                 isEditOpen = false
+
                 locationInfo()
             }
         }
@@ -185,7 +221,7 @@ class MainActivity : AppCompatActivity() {
             utilityProvider.hideKeyboard(this@MainActivity)
             binding.etSearch.clearFocus()
 
-            search(binding.etSearch.text.toString())
+            searchLocation(binding.etSearch.text.toString())
         }
         binding.etSearch.setOnEditorActionListener(TextView.OnEditorActionListener { _, actionId, _ ->
             when(actionId) {
@@ -193,7 +229,7 @@ class MainActivity : AppCompatActivity() {
                     utilityProvider.hideKeyboard(this@MainActivity)
                     binding.etSearch.clearFocus()
 
-                    search(binding.etSearch.text.toString())
+                    searchLocation(binding.etSearch.text.toString())
 
                     true
                 }
@@ -226,42 +262,52 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun search(keyword: String) {
-        //
-    }
-
-    private inner class MyLocationListener : LocationListener {
-        override fun onLocationChanged(loc: Location) {
-            lat = loc.latitude
-            lon = loc.longitude
-            alt = loc.altitude
-
+    private fun requestLocation() {
+        if(locationChecker.checkLocationPermission()) {
+            val lastKnownLocation : Location? = locationManager.getLastKnownLocation(providerName)
+            lastKnownLocation?.let {
+                lat = "%.1f".format(it.latitude).toDouble()
+                lon = "%.1f".format(it.longitude).toDouble()
+                alt = "%.1f".format(it.altitude).toDouble()
+            }
             locationInfo()
         }
+    }
 
-        override fun onProviderDisabled(provider: String) {
-            super.onProviderDisabled(provider)
-            // toast msg, shut down
-        }
+    private fun searchLocation(keyword: String) {
+        // google map search
     }
 
     override fun onStart() {
         super.onStart()
 
+        setup()
         locationInfoZoom()
         locationInfoEdit()
         locationSearch()
         btnOverlay()
     }
 
+    override fun onStop() {
+        super.onStop()
+        utilityProvider.setSpeed(speed)
+    }
+
     override fun onResume() {
         super.onResume()
-        if(!locationChecker.isLocationEnabled() && !locationChecker.checkLocationPermission())
-            finish()
+
+        if(locationChecker.isLocationEnabled()) {
+            if(!locationChecker.checkLocationPermission())
+                locationChecker.requestLocationPermission(this@MainActivity)
+        } else {
+            val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            this@MainActivity.startActivity(settingsIntent)
+        }
     }
 
     override fun onDestroy() {
         super.onDestroy()
+        utilityProvider.setSpeed(speed)
         mBinding = null
     }
 }
