@@ -1,6 +1,5 @@
 package gpster.dev
 
-import android.annotation.SuppressLint
 import android.content.Intent
 import android.location.Location
 import android.location.LocationListener
@@ -9,6 +8,9 @@ import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
 import android.view.View
+import android.view.inputmethod.EditorInfo
+import android.widget.TextView
+import androidx.core.content.ContextCompat
 import gpster.dev.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
@@ -25,9 +27,9 @@ class MainActivity : AppCompatActivity() {
     private var isExpanded = true
     private var isEditOpen = false
 
-    private var lat = 00.0000
-    private var lon = 00.0000
-    private var alt = 00.0000
+    private var lat = 0.0
+    private var lon = 0.0
+    private var alt = 0.0
     private var speed = 10.0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -35,38 +37,43 @@ class MainActivity : AppCompatActivity() {
         mBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        locationChecker = MyLocationChecker(this)
+        locationChecker = MyLocationChecker(this@MainActivity)
 
         if(locationChecker.isLocationEnabled()) {
             if(!locationChecker.checkLocationPermission())
-                locationChecker.requestLocationPermission(this)
+                locationChecker.requestLocationPermission(this@MainActivity)
         } else {
             val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            this.startActivity(settingsIntent)
+            this@MainActivity.startActivity(settingsIntent)
         }
 
         providerName = LocationManager.GPS_PROVIDER
-        locationProvider = MyLocationProvider(providerName, this)
+//        locationProvider = MyLocationProvider(providerName, this)
         locationListener = MyLocationListener()
-        locationProvider.updateLocation(locationListener)
-        utilityProvider = UtilityProvider(this)
+//        locationProvider.updateLocation(locationListener)
+        utilityProvider = UtilityProvider(this@MainActivity)
 
-        utilityProvider.hideKeyboard(this)
+        binding.root.setOnClickListener() {
+            utilityProvider.hideKeyboard(this@MainActivity)
+        }
     }
 
     private fun setupEt() {
         utilityProvider.apply {
             with(binding) {
+                focusClear(listOf(
+                    etLat, etLoc0, etLoc1, etLon, etAlt
+                ))
                 if(isExpanded) {
-                    focusHandling(etLat, etLon)
-                    focusHandling(etLon, etAlt)
-                    focusHandling(etAlt, etSpeed)
+                    focusHandling(etLat, etLon, null)
+                    focusHandling(etLon, etAlt, null)
+                    focusHandling(etAlt, etSpeed, null)
                 } else {
-                    focusHandling(etLat, etLoc0)
-                    focusHandling(etLoc0, etLoc1)
-                    focusHandling(etLoc1, etSpeed)
+                    focusHandling(etLat, etLoc0, null)
+                    focusHandling(etLoc0, etLoc1, null)
+                    focusHandling(etLoc1, etSpeed, null)
                 }
-                focusHandling(etSpeed, null)
+                focusHandling(etSpeed, null, this@MainActivity)
             }
         }
     }
@@ -110,9 +117,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun locationInfoEdit() {
-        setupEt()
         binding.ivEdit.setOnClickListener() {
+            setupEt()
             if(!isEditOpen) {
+                binding.ivZoom.visibility = View.GONE
                 if(!isExpanded) {
                     binding.apply {
                         tvLat.visibility = View.GONE
@@ -138,8 +146,7 @@ class MainActivity : AppCompatActivity() {
                 }
                 isEditOpen = true
             } else {
-                // et value gps reflection
-
+                binding.ivZoom.visibility = View.VISIBLE
                 if(!isExpanded) {
                     binding.apply {
                         tvLat.visibility = View.VISIBLE
@@ -164,19 +171,45 @@ class MainActivity : AppCompatActivity() {
                     ivEdit.setImageResource(R.drawable.ic_edit)
                 }
                 isEditOpen = false
+                locationInfo()
             }
         }
     }
 
-    @SuppressLint("ResourceAsColor")
+    private fun locationSearch() {
+        binding.llSearch.setOnClickListener() {
+            binding.etSearch.requestFocus()
+            utilityProvider.showKeyboard(this@MainActivity)
+        }
+        binding.ivSearch.setOnClickListener() {
+            utilityProvider.hideKeyboard(this@MainActivity)
+            binding.etSearch.clearFocus()
+
+            search(binding.etSearch.text.toString())
+        }
+        binding.etSearch.setOnEditorActionListener(TextView.OnEditorActionListener { _, actionId, _ ->
+            when(actionId) {
+                EditorInfo.IME_ACTION_DONE -> {
+                    utilityProvider.hideKeyboard(this@MainActivity)
+                    binding.etSearch.clearFocus()
+
+                    search(binding.etSearch.text.toString())
+
+                    true
+                }
+                else -> false
+            }
+        })
+    }
+
     private fun btnOverlay() {
         binding.btnOverlay.setOnClickListener() {
             if(!isRunning) {
                 // overlay start
                 binding.btnOverlay.apply {
                     setText("종료")
-                    setTextColor(R.color.blue)
-                    setBackgroundResource(R.drawable.bg_btn_overlay_end)
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.blue))
+                    setBackgroundResource(R.drawable.bg_outlined_box)
                 }
 
                 isRunning = true
@@ -184,13 +217,17 @@ class MainActivity : AppCompatActivity() {
                 // overlay end
                 binding.btnOverlay.apply {
                     setText("시작")
-                    setTextColor(R.color.white)
-                    setBackgroundResource(R.drawable.bg_btn_overlay_start)
+                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
+                    setBackgroundResource(R.drawable.bg_fill_box)
                 }
 
                 isRunning = false
             }
         }
+    }
+
+    private fun search(keyword: String) {
+        //
     }
 
     private inner class MyLocationListener : LocationListener {
@@ -213,6 +250,7 @@ class MainActivity : AppCompatActivity() {
 
         locationInfoZoom()
         locationInfoEdit()
+        locationSearch()
         btnOverlay()
     }
 

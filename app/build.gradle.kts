@@ -5,7 +5,7 @@ plugins {
 
 android {
     namespace = "gpster.dev"
-    compileSdk = 33
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "gpster.dev"

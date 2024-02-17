@@ -19,7 +19,7 @@
         android:orientation="horizontal"
         android:gravity="top"
 
-        android:background="@drawable/bg_location_info"
+        android:background="@drawable/bg_outlined_box"
 
         android:padding="16dp">
 
@@ -53,7 +53,7 @@
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
 
-                    android:text="@string/zero_long"
+                    android:text="@string/location_default"
                     android:textSize="20sp"
                     android:textColor="@color/black"
                     android:fontFamily="@font/pretendard_medium" />
@@ -66,9 +66,10 @@
                     android:visibility="gone"
                     android:inputType="number"
                     android:imeOptions="actionNext"
+                    android:maxLength="8"
                     android:background="@android:color/transparent"
 
-                    android:hint="@string/zero_long"
+                    android:hint="@string/location_default"
                     android:textSize="20sp"
                     android:textColorHint="@color/gray1"
                     android:fontFamily="@font/pretendard_medium" />
@@ -82,9 +83,10 @@
                     android:visibility="gone"
                     android:inputType="number"
                     android:imeOptions="actionNext"
+                    android:maxLength="7"
                     android:background="@android:color/transparent"
 
-                    android:hint="@string/zero_long"
+                    android:hint="@string/location_default"
                     android:textSize="20sp"
                     android:textColorHint="@color/gray1"
                     android:fontFamily="@font/pretendard_medium" />
@@ -98,9 +100,10 @@
                     android:visibility="gone"
                     android:inputType="number"
                     android:imeOptions="actionNext"
+                    android:maxLength="6"
                     android:background="@android:color/transparent"
 
-                    android:hint="@string/zero_short"
+                    android:hint="@string/location_default"
                     android:textSize="20sp"
                     android:textColorHint="@color/gray1"
                     android:fontFamily="@font/pretendard_medium" />
@@ -134,7 +137,7 @@
 
                     android:visibility="visible"
 
-                    android:text="@string/zero_long"
+                    android:text="@string/location_default"
                     android:textSize="20sp"
                     android:textColor="@color/black"
                     android:fontFamily="@font/pretendard_medium" />
@@ -147,9 +150,10 @@
                     android:visibility="gone"
                     android:inputType="number"
                     android:imeOptions="actionNext"
+                    android:maxLength="8"
                     android:background="@android:color/transparent"
 
-                    android:hint="@string/zero_long"
+                    android:hint="@string/location_default"
                     android:textSize="20sp"
                     android:textColorHint="@color/gray1"
                     android:fontFamily="@font/pretendard_medium" />
@@ -181,7 +185,7 @@
 
                     android:visibility="visible"
 
-                    android:text="@string/zero_short"
+                    android:text="@string/location_default"
                     android:textSize="20sp"
                     android:textColor="@color/black"
                     android:fontFamily="@font/pretendard_medium" />
@@ -194,9 +198,10 @@
                     android:visibility="gone"
                     android:inputType="number"
                     android:imeOptions="actionNext"
+                    android:maxLength="6"
                     android:background="@android:color/transparent"
 
-                    android:hint="@string/zero_short"
+                    android:hint="@string/location_default"
                     android:textSize="20sp"
                     android:textColorHint="@color/gray1"
                     android:fontFamily="@font/pretendard_medium" />
@@ -241,9 +246,10 @@
                     android:visibility="gone"
                     android:inputType="number"
                     android:imeOptions="actionDone"
+                    android:maxLength="5"
                     android:background="@android:color/transparent"
 
-                    android:hint="@string/zero_short"
+                    android:hint="@string/location_default"
                     android:textSize="20sp"
                     android:textColorHint="@color/gray1"
                     android:fontFamily="@font/pretendard_medium" />
@@ -271,12 +277,14 @@
 
     </LinearLayout>
     <LinearLayout
+        android:id="@+id/ll_search"
+
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
         android:gravity="center_vertical"
 
-        android:background="@drawable/bg_search"
+        android:background="@drawable/bg_outlined_box"
 
         android:layout_marginVertical="8dp"
 
@@ -290,10 +298,12 @@
             android:layout_height="wrap_content"
 
             android:inputType="text"
+            android:imeOptions="actionDone"
+            android:maxLines="5"
             android:background="@android:color/transparent"
 
             android:hint="@string/search"
-            android:textSize="16sp"
+            android:textSize="18sp"
             android:textColorHint="@color/gray1"
             android:fontFamily="@font/pretendard_regular" />
         <View
@@ -317,9 +327,9 @@
 
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
+        android:layout_marginVertical="8dp"
 
-        android:background="@drawable/bg_btn_overlay_start"
+        android:background="@drawable/bg_fill_box"
 
         android:text="@string/start"
         android:textSize="20sp"
