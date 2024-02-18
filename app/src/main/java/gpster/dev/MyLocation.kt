@@ -68,7 +68,7 @@ class MyLocationChecker(
             context, Manifest.permission.ACCESS_COARSE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        return fineLocationPermissionGranted && coarseLocationPermissionGranted
+        return fineLocationPermissionGranted || coarseLocationPermissionGranted
     }
 
     fun requestLocationPermission(activity: Activity) {

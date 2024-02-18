@@ -2,6 +2,7 @@ package gpster.dev
 
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
 import androidx.appcompat.app.AppCompatActivity
@@ -38,19 +39,36 @@ class MainActivity : AppCompatActivity() {
         setContentView(binding.root)
     }
 
-    private fun setup() {
-        locationChecker = MyLocationChecker(this@MainActivity)
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if(!isFinishing && requestCode == 0 && grantResults.isNotEmpty()) {
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED || grantResults[1] == PackageManager.PERMISSION_GRANTED)
+                requestLocation()
+            else
+                finish()
+        }
+    }
 
+    private fun requestPermission() {
         if(locationChecker.isLocationEnabled()) {
             if(!locationChecker.checkLocationPermission())
                 locationChecker.requestLocationPermission(this@MainActivity)
+            else
+                requestLocation()
         } else {
             val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
             this@MainActivity.startActivity(settingsIntent)
         }
+    }
 
+    private fun setup() {
         providerName = LocationManager.GPS_PROVIDER
         locationManager = this@MainActivity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+        locationChecker = MyLocationChecker(this@MainActivity)
 //        locationProvider = MyLocationProvider(providerName, this@MainActivity)
         utilityProvider = UtilityProvider(this@MainActivity)
         speed = utilityProvider.getSpeed()
@@ -58,7 +76,6 @@ class MainActivity : AppCompatActivity() {
         binding.root.setOnClickListener() {
             utilityProvider.hideKeyboard(this@MainActivity)
         }
-        requestLocation()
     }
 
     private fun setupEt() {
@@ -213,10 +230,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun locationSearch() {
-        binding.llSearch.setOnClickListener() {
-            binding.etSearch.requestFocus()
-            utilityProvider.showKeyboard(this@MainActivity)
-        }
         binding.ivSearch.setOnClickListener() {
             utilityProvider.hideKeyboard(this@MainActivity)
             binding.etSearch.clearFocus()
@@ -263,15 +276,19 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun requestLocation() {
-        if(locationChecker.checkLocationPermission()) {
-            val lastKnownLocation : Location? = locationManager.getLastKnownLocation(providerName)
-            lastKnownLocation?.let {
-                lat = "%.1f".format(it.latitude).toDouble()
-                lon = "%.1f".format(it.longitude).toDouble()
-                alt = "%.1f".format(it.altitude).toDouble()
-            }
-            locationInfo()
-        }
+//        if(locationChecker.checkLocationPermission()) {
+//            val lastKnownLocation : Location? = locationManager.getLastKnownLocation(providerName)
+//            lastKnownLocation?.let {
+//                lat = "%.1f".format(it.latitude).toDouble()
+//                lon = "%.1f".format(it.longitude).toDouble()
+//                alt = "%.1f".format(it.altitude).toDouble()
+//            }
+//            locationInfo()
+//        }
+        lat = 1.0
+        lon = 2.0
+        alt = 3.0
+        locationInfo()
     }
 
     private fun searchLocation(keyword: String) {
@@ -295,19 +312,11 @@ class MainActivity : AppCompatActivity() {
 
     override fun onResume() {
         super.onResume()
-
-        if(locationChecker.isLocationEnabled()) {
-            if(!locationChecker.checkLocationPermission())
-                locationChecker.requestLocationPermission(this@MainActivity)
-        } else {
-            val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            this@MainActivity.startActivity(settingsIntent)
-        }
+        requestPermission()
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        utilityProvider.setSpeed(speed)
         mBinding = null
     }
 }
