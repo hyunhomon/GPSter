@@ -12,17 +12,18 @@ import android.view.View
 import android.view.inputmethod.EditorInfo
 import android.widget.TextView
 import androidx.core.content.ContextCompat
+import com.google.android.gms.location.FusedLocationProviderClient
+import com.google.android.gms.location.LocationServices
 import gpster.dev.databinding.ActivityMainBinding
 
 class MainActivity : AppCompatActivity() {
     private var mBinding : ActivityMainBinding ?= null
     private val binding : ActivityMainBinding get() = requireNotNull(mBinding)
 
-    private lateinit var providerName : String
     private lateinit var locationManager : LocationManager
-    private lateinit var locationProvider : MyLocationProvider
     private lateinit var locationChecker : MyLocationChecker
     private lateinit var utilityProvider : UtilityProvider
+    private lateinit var fusedLocationProvider : FusedLocationProviderClient
 
     private var isRunning = false
     private var isExpanded = true
@@ -53,24 +54,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun requestPermission() {
-        if(locationChecker.isLocationEnabled()) {
-            if(!locationChecker.checkLocationPermission())
-                locationChecker.requestLocationPermission(this@MainActivity)
-            else
-                requestLocation()
-        } else {
-            val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            this@MainActivity.startActivity(settingsIntent)
-        }
-    }
-
     private fun setup() {
-        providerName = LocationManager.GPS_PROVIDER
         locationManager = this@MainActivity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         locationChecker = MyLocationChecker(this@MainActivity)
-//        locationProvider = MyLocationProvider(providerName, this@MainActivity)
         utilityProvider = UtilityProvider(this@MainActivity)
+        fusedLocationProvider = LocationServices.getFusedLocationProviderClient(this@MainActivity)
         speed = utilityProvider.getSpeed()
 
         binding.root.setOnClickListener() {
@@ -106,9 +94,9 @@ class MainActivity : AppCompatActivity() {
                 tvAlt.setText(alt.toString())
             }
         } else {
-            binding.tvLat.setText("${lat}, ${lon}, ${alt}")
+            binding.tvLat.setText("$lat, $lon, $alt")
         }
-        binding.tvSpeed.setText("${speed} km/h")
+        binding.tvSpeed.setText("$speed km/h")
     }
 
     private fun locationInfoZoom() {
@@ -254,14 +242,19 @@ class MainActivity : AppCompatActivity() {
     private fun btnOverlay() {
         binding.btnOverlay.setOnClickListener() {
             if(!isRunning) {
-                // overlay start
-                binding.btnOverlay.apply {
-                    setText("종료")
-                    setTextColor(ContextCompat.getColor(this@MainActivity, R.color.blue))
-                    setBackgroundResource(R.drawable.bg_outlined_box)
-                }
+                if(!Settings.canDrawOverlays(this@MainActivity)) {
+                    val settingsIntent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
+                    this@MainActivity.startActivity(settingsIntent)
+                } else {
+                    // overlay start
+                    binding.btnOverlay.apply {
+                        setText("종료")
+                        setTextColor(ContextCompat.getColor(this@MainActivity, R.color.blue))
+                        setBackgroundResource(R.drawable.bg_outlined_box)
+                    }
 
-                isRunning = true
+                    isRunning = true
+                }
             } else {
                 // overlay end
                 binding.btnOverlay.apply {
@@ -275,20 +268,33 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private fun requestPermission() {
+        if(locationChecker.isLocationEnabled()) {
+            if(!locationChecker.checkLocationPermission())
+                locationChecker.requestLocationPermission(this@MainActivity)
+            else
+                requestLocation()
+        } else {
+            val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+            this@MainActivity.startActivity(settingsIntent)
+        }
+    }
+
     private fun requestLocation() {
-//        if(locationChecker.checkLocationPermission()) {
-//            val lastKnownLocation : Location? = locationManager.getLastKnownLocation(providerName)
-//            lastKnownLocation?.let {
-//                lat = "%.1f".format(it.latitude).toDouble()
-//                lon = "%.1f".format(it.longitude).toDouble()
-//                alt = "%.1f".format(it.altitude).toDouble()
-//            }
-//            locationInfo()
-//        }
-        lat = 1.0
-        lon = 2.0
-        alt = 3.0
-        locationInfo()
+        if(locationChecker.checkLocationPermission()) {
+            fusedLocationProvider.lastLocation.addOnSuccessListener { location: Location? ->
+                location?.let {
+                    lat = "%.1f".format(it.latitude).toDouble()
+                    lon = "%.1f".format(it.longitude).toDouble()
+                    alt = "%.1f".format(it.altitude).toDouble()
+
+                    locationInfo()
+                } ?: run {
+                    utilityProvider.toast("현재 위치를 가져올 수 없습니다")
+                    locationInfo()
+                }
+            }
+        }
     }
 
     private fun searchLocation(keyword: String) {

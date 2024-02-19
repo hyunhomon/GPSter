@@ -37,7 +37,6 @@ class MyLocationProvider(
                 elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
             }
 
-            lm.setTestProviderEnabled(providerName, true)
             lm.setTestProviderLocation(providerName, mockLocation)
         }
         catch (e: RuntimeException) {

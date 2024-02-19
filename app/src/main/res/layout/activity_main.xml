@@ -8,8 +8,7 @@
     android:orientation="vertical"
     android:gravity="top"
 
-    android:paddingVertical="24dp"
-    android:paddingHorizontal="12dp"
+    android:paddingVertical="12dp"
 
     tools:context=".MainActivity">
 
@@ -21,6 +20,7 @@
 
         android:background="@drawable/bg_outlined_box"
 
+        android:layout_marginHorizontal="12dp"
         android:padding="16dp">
 
         <LinearLayout
@@ -285,6 +285,7 @@
         android:background="@drawable/bg_outlined_box"
 
         android:layout_marginVertical="8dp"
+        android:layout_marginHorizontal="12dp"
 
         android:paddingVertical="12dp"
         android:paddingHorizontal="16dp">
@@ -317,15 +318,18 @@
     <View
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        android:layout_weight="1" />
+        android:layout_weight="1"
+        android:background="@color/gray0" />
     <Button
         android:id="@+id/btn_overlay"
 
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:layout_marginVertical="8dp"
 
         android:background="@drawable/bg_fill_box"
+
+        android:layout_marginVertical="8dp"
+        android:layout_marginHorizontal="12dp"
 
         android:text="@string/start"
         android:textSize="20sp"

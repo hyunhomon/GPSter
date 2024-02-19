@@ -24,13 +24,6 @@ class UtilityProvider(
             imm.hideSoftInputFromWindow(it.windowToken, 0)
         }
     }
-    fun showKeyboard(activity: Activity) {
-        val imm = activity.getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
-
-        activity.currentFocus?.let {
-            imm.showSoftInput(it, InputMethodManager.SHOW_IMPLICIT)
-        }
-    }
     fun focusHandling(currentEt: EditText, nextEt: EditText?, activity: Activity?) {
         val listener = TextView.OnEditorActionListener { _, actionId, _ ->
             when(actionId) {
