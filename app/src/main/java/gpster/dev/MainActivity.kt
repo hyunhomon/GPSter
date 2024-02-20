@@ -5,6 +5,7 @@ import android.content.Intent
 import android.content.pm.PackageManager
 import android.location.Location
 import android.location.LocationManager
+import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.provider.Settings
@@ -20,12 +21,12 @@ class MainActivity : AppCompatActivity() {
     private var mBinding : ActivityMainBinding ?= null
     private val binding : ActivityMainBinding get() = requireNotNull(mBinding)
 
-    private lateinit var locationManager : LocationManager
     private lateinit var locationChecker : MyLocationChecker
     private lateinit var utilityProvider : UtilityProvider
     private lateinit var fusedLocationProvider : FusedLocationProviderClient
 
     private var isRunning = false
+    private var isRunningOverlay = false
     private var isExpanded = true
     private var isEditOpen = false
 
@@ -55,7 +56,6 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setup() {
-        locationManager = this@MainActivity.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         locationChecker = MyLocationChecker(this@MainActivity)
         utilityProvider = UtilityProvider(this@MainActivity)
         fusedLocationProvider = LocationServices.getFusedLocationProviderClient(this@MainActivity)
@@ -241,7 +241,7 @@ class MainActivity : AppCompatActivity() {
 
     private fun btnOverlay() {
         binding.btnOverlay.setOnClickListener() {
-            if(!isRunning) {
+            if(!isRunningOverlay) {
                 if(!Settings.canDrawOverlays(this@MainActivity)) {
                     val settingsIntent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
                     this@MainActivity.startActivity(settingsIntent)
@@ -253,7 +253,7 @@ class MainActivity : AppCompatActivity() {
                         setBackgroundResource(R.drawable.bg_outlined_box)
                     }
 
-                    isRunning = true
+                    isRunningOverlay = true
                 }
             } else {
                 // overlay end
@@ -263,20 +263,25 @@ class MainActivity : AppCompatActivity() {
                     setBackgroundResource(R.drawable.bg_fill_box)
                 }
 
-                isRunning = false
+                isRunningOverlay = false
             }
         }
     }
 
     private fun requestPermission() {
-        if(locationChecker.isLocationEnabled()) {
-            if(!locationChecker.checkLocationPermission())
-                locationChecker.requestLocationPermission(this@MainActivity)
-            else
-                requestLocation()
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if(locationChecker.isLocationEnabled()) {
+                if(!locationChecker.checkLocationPermission())
+                    locationChecker.requestLocationPermission(this@MainActivity)
+                else
+                    requestLocation()
+            } else {
+                val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                this@MainActivity.startActivity(settingsIntent)
+            }
         } else {
-            val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-            this@MainActivity.startActivity(settingsIntent)
+            utilityProvider.toast("해당 버전은 지원하지 않는 버전입니다")
+            finish()
         }
     }
 
@@ -289,9 +294,11 @@ class MainActivity : AppCompatActivity() {
                     alt = "%.1f".format(it.altitude).toDouble()
 
                     locationInfo()
+                    startLocationService()
                 } ?: run {
                     utilityProvider.toast("현재 위치를 가져올 수 없습니다")
                     locationInfo()
+                    startLocationService()
                 }
             }
         }
@@ -299,6 +306,19 @@ class MainActivity : AppCompatActivity() {
 
     private fun searchLocation(keyword: String) {
         // google map search
+    }
+
+    private fun startLocationService() {
+        if(!isRunning) {
+            val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
+            this@MainActivity.startService(serviceIntent)
+
+            isRunning = true
+        }
+    }
+
+    private fun startOverlayService() {
+        //
     }
 
     override fun onStart() {
