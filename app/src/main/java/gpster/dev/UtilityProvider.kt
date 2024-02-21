@@ -46,10 +46,10 @@ class UtilityProvider(
             et.setOnEditorActionListener(null)
         }
     }
-    fun parseToDouble(s: String, min: Double, max: Double, def: Double) : Double {
+    fun parseToDouble(s: String, min: Double, max: Double, def: Double, format: String) : Double {
         try {
             val num = s.toDoubleOrNull() ?: def
-            val result : Double = "%.1f".format(num).toDouble()
+            val result : Double = format.format(num).toDouble()
 
             return if(result in min .. max) result else {
                 toast("입력 범위를 벗어났습니다")

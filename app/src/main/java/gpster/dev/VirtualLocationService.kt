@@ -1,47 +1,32 @@
 package gpster.dev
 
 import android.app.Notification
-import android.app.NotificationChannel
-import android.app.NotificationManager
 import android.app.PendingIntent
 import android.app.Service
 import android.content.Intent
-import android.os.Build
+import android.location.LocationManager
+import android.os.Handler
 import android.os.IBinder
-import android.widget.Toast
-import androidx.annotation.RequiresApi
+import android.os.Looper
 import androidx.core.app.NotificationCompat
 
 class VirtualLocationService : Service() {
-//    private lateinit var locationProvider : MyLocationProvider
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    override fun onCreate() {
-        super.onCreate()
-        createNotificationChannel()
-    }
+    private lateinit var app : App
+    private lateinit var handler : Handler
+    private lateinit var locationProvider : MyLocationProvider
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        Toast.makeText(this@VirtualLocationService, "location service started", Toast.LENGTH_SHORT).show()
-        showNotification()
+        app = application as App
+        handler = Handler(Looper.getMainLooper())
+
+        if(!app.isRunning) {
+            showNotification()
+            locationProvider = MyLocationProvider(LocationManager.GPS_PROVIDER, this@VirtualLocationService)
+            app.isRunning = true
+            handler.postDelayed(updateRunnable, 100)
+        }
 
         return START_STICKY
-    }
-
-    override fun onBind(intent: Intent): IBinder? {
-        return null
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createNotificationChannel() {
-        val nm = this@VirtualLocationService.getSystemService(NotificationManager::class.java)
-        val channel = NotificationChannel(
-            "gpster",
-            "gpster",
-            NotificationManager.IMPORTANCE_DEFAULT
-        )
-
-        nm.createNotificationChannel(channel)
     }
 
     private fun showNotification() {
@@ -57,8 +42,19 @@ class VirtualLocationService : Service() {
         startForeground(1, notification)
     }
 
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            locationProvider.setLocation(app.lat, app.lon, app.alt)
+            handler.postDelayed(this, 100)
+        }
+    }
+
+    override fun onBind(intent: Intent): IBinder? {
+        return null
+    }
+
     override fun onDestroy() {
         super.onDestroy()
-//        locationProvider.shutdown()
+        locationProvider.shutdown()
     }
 }

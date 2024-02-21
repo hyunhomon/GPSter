@@ -7,7 +7,12 @@ import android.app.Activity
 import android.location.Location
 import android.location.LocationManager
 import android.location.provider.ProviderProperties
+import android.os.Build
 import android.os.SystemClock
+import android.provider.Settings
+import android.util.Log
+import android.widget.Toast
+import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import java.lang.RuntimeException
 
@@ -15,25 +20,23 @@ class MyLocationProvider(
     private val providerName : String,
     private val context : Context
 ) {
+    private val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
     init {
-        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        lm.addTestProvider(providerName, true, true, true, true, true, true, true,
-            ProviderProperties.POWER_USAGE_MEDIUM, ProviderProperties.ACCURACY_FINE)
+        lm.addTestProvider(providerName, false, false, false, false, true, true, true,
+            ProviderProperties.POWER_USAGE_HIGH, ProviderProperties.ACCURACY_FINE)
         lm.setTestProviderEnabled(providerName, true)
     }
 
     fun setLocation(lat: Double, lon: Double, alt: Double) {
         try {
-            val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-            val mockLocation = Location(providerName)
-            val currentTime = System.currentTimeMillis()
-
+            var mockLocation = Location(providerName)
             mockLocation.apply {
                 latitude = lat
                 longitude = lon
                 altitude = alt
-                time = currentTime
                 accuracy = 1.0f
+                time = System.currentTimeMillis()
                 elapsedRealtimeNanos = SystemClock.elapsedRealtimeNanos()
             }
 
@@ -45,7 +48,6 @@ class MyLocationProvider(
     }
 
     fun shutdown() {
-        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         lm.removeTestProvider(providerName)
     }
 }
@@ -53,8 +55,9 @@ class MyLocationProvider(
 class MyLocationChecker(
     private val context : Context
 ) {
+    private val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+
     fun isLocationEnabled() : Boolean {
-        val lm = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
         return lm.isProviderEnabled(LocationManager.GPS_PROVIDER)
     }
 
@@ -63,11 +66,7 @@ class MyLocationChecker(
             context, Manifest.permission.ACCESS_FINE_LOCATION
         ) == PackageManager.PERMISSION_GRANTED
 
-        val coarseLocationPermissionGranted = ContextCompat.checkSelfPermission(
-            context, Manifest.permission.ACCESS_COARSE_LOCATION
-        ) == PackageManager.PERMISSION_GRANTED
-
-        return fineLocationPermissionGranted || coarseLocationPermissionGranted
+        return fineLocationPermissionGranted
     }
 
     fun requestLocationPermission(activity: Activity) {
