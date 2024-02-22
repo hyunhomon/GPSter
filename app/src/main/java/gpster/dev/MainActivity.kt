@@ -31,14 +31,19 @@ class MainActivity : AppCompatActivity() {
     private var mBinding : ActivityMainBinding ?= null
     private val binding : ActivityMainBinding get() = requireNotNull(mBinding)
 
-    private lateinit var app : App
-
     private lateinit var locationChecker : MyLocationChecker
     private lateinit var utilityProvider : UtilityProvider
     private lateinit var fusedLocationProvider : FusedLocationProviderClient
 
-    private var isExpanded = true
-    private var isEditOpen = false
+    private var isRunning : Boolean = App.isRunning.value == true
+    private var isRunningOverlay : Boolean = App.isRunningOverlay.value == true
+    private var isExpanded : Boolean = true
+    private var isEditOpen : Boolean = false
+
+    private var lat : Double = App.location.value!!.lat
+    private var lon : Double = App.location.value!!.lon
+    private var alt : Double = App.location.value!!.alt
+    private var speed : Double = App.speed
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -69,11 +74,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun setup() {
-        app = application as App
         locationChecker = MyLocationChecker(this@MainActivity)
         utilityProvider = UtilityProvider(this@MainActivity)
         fusedLocationProvider = LocationServices.getFusedLocationProviderClient(this@MainActivity)
-        app.speed = utilityProvider.getSpeed()
+        speed = utilityProvider.getSpeed()
 
         binding.root.setOnClickListener() {
             utilityProvider.hideKeyboard(this@MainActivity)
@@ -84,7 +88,7 @@ class MainActivity : AppCompatActivity() {
         utilityProvider.apply {
             with(binding) {
                 focusClear(listOf(
-                    etLat, etLoc0, etLoc1, etLon, etAlt
+                    etLat, etLoc0, etLoc1, etLon, etAlt, etSpeed
                 ))
                 if(isExpanded) {
                     focusHandling(etLat, etLon, null)
@@ -103,14 +107,14 @@ class MainActivity : AppCompatActivity() {
     private fun locationInfo() {
         if(isExpanded) {
             binding.apply {
-                tvLat.setText(app.lat.toString())
-                tvLon.setText(app.lon.toString())
-                tvAlt.setText(app.alt.toString())
+                tvLat.setText(lat.toString())
+                tvLon.setText(lon.toString())
+                tvAlt.setText(alt.toString())
             }
         } else {
-            binding.tvLat.setText("${app.lat}, ${app.lon}, ${app.alt}")
+            binding.tvLat.setText("${lat}, ${lon}, ${alt}")
         }
-        binding.tvSpeed.setText("${app.speed} km/h")
+        binding.tvSpeed.setText("${speed} km/h")
     }
 
     private fun locationInfoZoom() {
@@ -142,7 +146,6 @@ class MainActivity : AppCompatActivity() {
         binding.ivEdit.setOnClickListener() {
             setupEt()
             if(!isEditOpen) {
-                binding.ivZoom.visibility = View.GONE
                 if(!isExpanded) {
                     binding.apply {
                         tvLat.visibility = View.GONE
@@ -164,19 +167,20 @@ class MainActivity : AppCompatActivity() {
                 binding.apply {
                     tvSpeed.visibility = View.GONE
                     etSpeed.visibility = View.VISIBLE
+                    ivZoom.visibility = View.GONE
                     ivEdit.setImageResource(R.drawable.ic_check)
                 }
+
                 isEditOpen = true
             } else {
                 utilityProvider.hideKeyboard(this@MainActivity)
-                binding.ivZoom.visibility = View.VISIBLE
 
-                app.lat = utilityProvider.parseToDouble(binding.etLat.text.toString(), -90.0, 90.0, app.lat, "%.4f")
-                app.speed = utilityProvider.parseToDouble(binding.etSpeed.text.toString(), 0.0, 100.0, app.speed, "%.1f")
+                lat = utilityProvider.parseToDouble(binding.etLat.text.toString(), -90.0, 90.0, lat, "%.4f")
+                speed = utilityProvider.parseToDouble(binding.etSpeed.text.toString(), 0.0, 300.0, speed, "%.1f")
 
                 if(!isExpanded) {
-                    app.lon = utilityProvider.parseToDouble(binding.etLoc0.text.toString(), -180.0, 180.0, app.lon, "%.4f")
-                    app.alt = utilityProvider.parseToDouble(binding.etLoc1.text.toString(), 0.0, 9999.9, app.alt, "%.1f")
+                    lon = utilityProvider.parseToDouble(binding.etLoc0.text.toString(), -180.0, 180.0, lon, "%.4f")
+                    alt = utilityProvider.parseToDouble(binding.etLoc1.text.toString(), 0.0, 9999.9, alt, "%.1f")
 
                     binding.apply {
                         tvLat.visibility = View.VISIBLE
@@ -194,8 +198,8 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    app.lon = utilityProvider.parseToDouble(binding.etLon.text.toString(), -180.0, 180.0, app.lon, "%.4f")
-                    app.alt = utilityProvider.parseToDouble(binding.etAlt.text.toString(), 0.0, 9999.9, app.alt, "%.1f")
+                    lon = utilityProvider.parseToDouble(binding.etLon.text.toString(), -180.0, 180.0, lon, "%.4f")
+                    alt = utilityProvider.parseToDouble(binding.etAlt.text.toString(), 0.0, 9999.9, alt, "%.1f")
 
                     binding.apply {
                         tvLat.visibility = View.VISIBLE
@@ -222,8 +226,10 @@ class MainActivity : AppCompatActivity() {
                         visibility = View.GONE
                         setText("")
                     }
+                    ivZoom.visibility = View.VISIBLE
                     ivEdit.setImageResource(R.drawable.ic_edit)
                 }
+
                 isEditOpen = false
 
                 locationInfo()
@@ -282,14 +288,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun requestPermission() {
+    private fun checkDefault() {
         if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
             if(Settings.Secure.getInt(this@MainActivity.contentResolver, Settings.Secure.DEVELOPMENT_SETTINGS_ENABLED) == 1) {
                 if(locationChecker.isLocationEnabled()) {
                     if(!locationChecker.checkLocationPermission())
                         locationChecker.requestLocationPermission(this@MainActivity)
-                    else
+                    else if(!isRunning) {
+                        createNotificationChannel()
                         requestLocation()
+                    }
                 } else {
                     val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
                     this@MainActivity.startActivity(settingsIntent)
@@ -306,17 +314,17 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestLocation() {
         if(locationChecker.checkLocationPermission()) {
-            createNotificationChannel()
+            val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
             fusedLocationProvider.lastLocation.addOnSuccessListener { location: Location? ->
                 location?.let {
-                    app.lat = "%.4f".format(it.latitude).toDouble()
-                    app.lon = "%.4f".format(it.longitude).toDouble()
-                    app.alt = "%.1f".format(it.altitude).toDouble()
+                    lat = "%.4f".format(it.latitude).toDouble()
+                    lon = "%.4f".format(it.longitude).toDouble()
+                    alt = "%.1f".format(it.altitude).toDouble()
 
-                    startLocationService()
+                    startService(serviceIntent)
                 } ?: run {
                     utilityProvider.toast("현재 위치를 가져올 수 없습니다")
-                    startLocationService()
+                    startService(serviceIntent)
                 }
             }
         }
@@ -343,19 +351,6 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    private fun startLocationService() {
-        if(!app.isRunning) {
-            val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
-            startService(serviceIntent)
-
-            locationInfo()
-        }
-    }
-
-    private fun startOverlayService() {
-        //
-    }
-
     override fun onStart() {
         super.onStart()
 
@@ -368,23 +363,21 @@ class MainActivity : AppCompatActivity() {
 
     override fun onStop() {
         super.onStop()
-        utilityProvider.setSpeed(app.speed)
+        utilityProvider.setSpeed(speed)
     }
 
     override fun onResume() {
         super.onResume()
-        requestPermission()
+        checkDefault()
     }
 
     override fun onDestroy() {
         super.onDestroy()
         mBinding = null
 
-        if(app.isRunning) {
+        if(isRunning) {
             val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
             stopService(serviceIntent)
-
-            app.isRunning = false
         }
     }
 }
