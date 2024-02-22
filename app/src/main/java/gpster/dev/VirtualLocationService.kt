@@ -11,40 +11,39 @@ import android.os.Looper
 import androidx.core.app.NotificationCompat
 
 class VirtualLocationService : Service() {
-    private lateinit var app : App
     private lateinit var handler : Handler
     private lateinit var locationProvider : MyLocationProvider
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        app = application as App
-        handler = Handler(Looper.getMainLooper())
+        createNotification()
 
-        if(!app.isRunning) {
-            showNotification()
-            locationProvider = MyLocationProvider(LocationManager.GPS_PROVIDER, this@VirtualLocationService)
-            app.isRunning = true
-            handler.postDelayed(updateRunnable, 100)
-        }
+        handler = Handler(Looper.getMainLooper())
+        locationProvider = MyLocationProvider(LocationManager.GPS_PROVIDER, this@VirtualLocationService)
+        App.isRunning = true
+
+        handler.postDelayed(updateRunnable, 100)
 
         return START_STICKY
     }
 
-    private fun showNotification() {
+    private fun createNotification() {
         val mainIntent = Intent(this@VirtualLocationService, MainActivity::class.java)
         val pendingIntent = PendingIntent.getActivity(this@VirtualLocationService, 0, mainIntent, PendingIntent.FLAG_IMMUTABLE)
-        val notification : Notification = NotificationCompat.Builder(this@VirtualLocationService, "gpster")
+        val notification : Notification = NotificationCompat.Builder(this@VirtualLocationService, App.CHANNEL_ID)
             .setContentTitle("가상 위치 서비스가 실행 중입니다")
-            .setSmallIcon(R.drawable.ic_teleport)
+            .setSmallIcon(R.drawable.ic_location)
             .setContentIntent(pendingIntent)
             .setOngoing(true)
             .build()
 
-        startForeground(1, notification)
+        startForeground(App.NOTIFICATION_ID, notification)
     }
 
     private val updateRunnable = object : Runnable {
         override fun run() {
-            locationProvider.setLocation(app.lat, app.lon, app.alt)
+            locationProvider.setLocation(
+                App.lat, App.lon, App.alt
+            )
             handler.postDelayed(this, 100)
         }
     }
@@ -56,5 +55,6 @@ class VirtualLocationService : Service() {
     override fun onDestroy() {
         super.onDestroy()
         locationProvider.shutdown()
+        App.isRunning = false
     }
 }

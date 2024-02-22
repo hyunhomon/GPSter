@@ -1,21 +1,15 @@
 package gpster.dev
 
 import android.Manifest
-import android.app.Application
 import android.app.NotificationChannel
 import android.app.NotificationManager
-import android.content.ComponentName
-import android.content.Context
 import android.content.Intent
-import android.content.ServiceConnection
 import android.content.pm.PackageManager
 import android.location.Location
-import android.location.LocationManager
 import android.os.Build
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.os.Handler
-import android.os.IBinder
 import android.os.Looper
 import android.provider.Settings
 import android.view.View
@@ -31,24 +25,52 @@ class MainActivity : AppCompatActivity() {
     private var mBinding : ActivityMainBinding ?= null
     private val binding : ActivityMainBinding get() = requireNotNull(mBinding)
 
+    private lateinit var handler : Handler
     private lateinit var locationChecker : MyLocationChecker
     private lateinit var utilityProvider : UtilityProvider
     private lateinit var fusedLocationProvider : FusedLocationProviderClient
 
-    private var isRunning : Boolean = App.isRunning.value == true
-    private var isRunningOverlay : Boolean = App.isRunningOverlay.value == true
     private var isExpanded : Boolean = true
     private var isEditOpen : Boolean = false
-
-    private var lat : Double = App.location.value!!.lat
-    private var lon : Double = App.location.value!!.lon
-    private var alt : Double = App.location.value!!.alt
-    private var speed : Double = App.speed
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         mBinding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
+    }
+
+    override fun onStart() {
+        super.onStart()
+
+        setup()
+        locationInfoZoom()
+        locationInfoEdit()
+        locationSearch()
+        btnOverlay()
+    }
+
+    override fun onStop() {
+        super.onStop()
+        utilityProvider.setSpeed(App.speed)
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkDefault()
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        mBinding = null
+
+        if(App.isRunning) {
+            val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
+            stopService(serviceIntent)
+        }
+        if(App.isRunningOverlay) {
+            val serviceIntent = Intent(this@MainActivity, OverlayService::class.java)
+            stopService(serviceIntent)
+        }
     }
 
     override fun onRequestPermissionsResult(
@@ -59,7 +81,7 @@ class MainActivity : AppCompatActivity() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if(!isFinishing) {
             if(requestCode == 0 && grantResults.isNotEmpty()) {
-                if(grantResults[0] == PackageManager.PERMISSION_GRANTED || grantResults[1] == PackageManager.PERMISSION_GRANTED)
+                if(grantResults[0] == PackageManager.PERMISSION_GRANTED)
                     requestLocation()
                 else
                     finish()
@@ -73,12 +95,84 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    private val updateRunnable = object : Runnable {
+        override fun run() {
+            locationInfo()
+            handler.postDelayed(this, 100)
+        }
+    }
+
+    private fun checkDefault() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            if(Settings.Secure.getInt(this@MainActivity.contentResolver, Settings.Secure.DEVELOPMENT_SETTINGS_ENABLED) == 1) {
+                if(locationChecker.isLocationEnabled()) {
+                    if(!locationChecker.checkLocationPermission())
+                        locationChecker.requestLocationPermission(this@MainActivity)
+                    else if(!App.isRunning) {
+                        createNotificationChannel()
+                        requestLocation()
+                    }
+                } else {
+                    val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                    this@MainActivity.startActivity(settingsIntent)
+                }
+            } else {
+                utilityProvider.toast("디버그 모드가 꺼져 있습니다")
+                finish()
+            }
+        } else {
+            utilityProvider.toast("해당 버전은 지원하지 않는 버전입니다")
+            finish()
+        }
+    }
+
+    @RequiresApi(Build.VERSION_CODES.O)
+    private fun createNotificationChannel() {
+        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
+            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
+            this@MainActivity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
+        } else {
+            val nm = this@MainActivity.getSystemService(NotificationManager::class.java)
+            val channel = NotificationChannel(
+                App.CHANNEL_ID,
+                "gpster",
+                NotificationManager.IMPORTANCE_DEFAULT
+            )
+
+            nm.createNotificationChannel(channel)
+        }
+    }
+
+    private fun requestLocation() {
+        if(locationChecker.checkLocationPermission()) {
+            val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
+            fusedLocationProvider.lastLocation.addOnSuccessListener { location: Location? ->
+                location?.let {
+                    App.lat = "%.4f".format(it.latitude).toDouble()
+                    App.lon = "%.4f".format(it.longitude).toDouble()
+                    App.alt = "%.1f".format(it.altitude).toDouble()
+
+                    startService(serviceIntent)
+                } ?: run {
+                    utilityProvider.toast("현재 위치를 가져올 수 없습니다")
+                    startService(serviceIntent)
+                }
+            }
+        }
+    }
+
+    private fun searchLocation(keyword: String) {
+        // google map search
+    }
+
     private fun setup() {
+        handler = Handler(Looper.getMainLooper())
         locationChecker = MyLocationChecker(this@MainActivity)
         utilityProvider = UtilityProvider(this@MainActivity)
         fusedLocationProvider = LocationServices.getFusedLocationProviderClient(this@MainActivity)
-        speed = utilityProvider.getSpeed()
+        App.speed = utilityProvider.getSpeed()
 
+        handler.postDelayed(updateRunnable, 100)
         binding.root.setOnClickListener() {
             utilityProvider.hideKeyboard(this@MainActivity)
         }
@@ -107,14 +201,14 @@ class MainActivity : AppCompatActivity() {
     private fun locationInfo() {
         if(isExpanded) {
             binding.apply {
-                tvLat.setText(lat.toString())
-                tvLon.setText(lon.toString())
-                tvAlt.setText(alt.toString())
+                tvLat.setText(App.lat.toString())
+                tvLon.setText(App.lon.toString())
+                tvAlt.setText(App.alt.toString())
             }
         } else {
-            binding.tvLat.setText("${lat}, ${lon}, ${alt}")
+            binding.tvLat.setText("${App.lat}, ${App.lon}, ${App.alt}")
         }
-        binding.tvSpeed.setText("${speed} km/h")
+        binding.tvSpeed.setText("${App.speed} km/h")
     }
 
     private fun locationInfoZoom() {
@@ -175,12 +269,12 @@ class MainActivity : AppCompatActivity() {
             } else {
                 utilityProvider.hideKeyboard(this@MainActivity)
 
-                lat = utilityProvider.parseToDouble(binding.etLat.text.toString(), -90.0, 90.0, lat, "%.4f")
-                speed = utilityProvider.parseToDouble(binding.etSpeed.text.toString(), 0.0, 300.0, speed, "%.1f")
+                App.lat = utilityProvider.parseToDouble(binding.etLat.text.toString(), -90.0, 90.0, App.lat, "%.4f")
+                App.speed = utilityProvider.parseToDouble(binding.etSpeed.text.toString(), 0.0, 300.0, App.speed, "%.1f")
 
                 if(!isExpanded) {
-                    lon = utilityProvider.parseToDouble(binding.etLoc0.text.toString(), -180.0, 180.0, lon, "%.4f")
-                    alt = utilityProvider.parseToDouble(binding.etLoc1.text.toString(), 0.0, 9999.9, alt, "%.1f")
+                    App.lon = utilityProvider.parseToDouble(binding.etLoc0.text.toString(), -180.0, 180.0, App.lon, "%.4f")
+                    App.alt = utilityProvider.parseToDouble(binding.etLoc1.text.toString(), 0.0, 9999.9, App.alt, "%.1f")
 
                     binding.apply {
                         tvLat.visibility = View.VISIBLE
@@ -198,8 +292,8 @@ class MainActivity : AppCompatActivity() {
                         }
                     }
                 } else {
-                    lon = utilityProvider.parseToDouble(binding.etLon.text.toString(), -180.0, 180.0, lon, "%.4f")
-                    alt = utilityProvider.parseToDouble(binding.etAlt.text.toString(), 0.0, 9999.9, alt, "%.1f")
+                    App.lon = utilityProvider.parseToDouble(binding.etLon.text.toString(), -180.0, 180.0, App.lon, "%.4f")
+                    App.alt = utilityProvider.parseToDouble(binding.etAlt.text.toString(), 0.0, 9999.9, App.alt, "%.1f")
 
                     binding.apply {
                         tvLat.visibility = View.VISIBLE
@@ -231,8 +325,6 @@ class MainActivity : AppCompatActivity() {
                 }
 
                 isEditOpen = false
-
-                locationInfo()
             }
         }
     }
@@ -260,124 +352,28 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun btnOverlay() {
+        val serviceIntent = Intent(this@MainActivity, OverlayService::class.java)
         binding.btnOverlay.setOnClickListener() {
-            if(!app.isRunningOverlay) {
+            if(!App.isRunningOverlay) {
                 if(!Settings.canDrawOverlays(this@MainActivity)) {
                     val settingsIntent = Intent(Settings.ACTION_MANAGE_OVERLAY_PERMISSION)
                     this@MainActivity.startActivity(settingsIntent)
                 } else {
-                    // overlay start
+                    startService(serviceIntent)
                     binding.btnOverlay.apply {
                         setText("종료")
                         setTextColor(ContextCompat.getColor(this@MainActivity, R.color.blue))
                         setBackgroundResource(R.drawable.bg_outlined_box)
                     }
-
-                    app.isRunningOverlay = true
                 }
             } else {
-                // overlay end
+                stopService(serviceIntent)
                 binding.btnOverlay.apply {
                     setText("시작")
                     setTextColor(ContextCompat.getColor(this@MainActivity, R.color.white))
                     setBackgroundResource(R.drawable.bg_fill_box)
                 }
-
-                app.isRunningOverlay = false
             }
-        }
-    }
-
-    private fun checkDefault() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            if(Settings.Secure.getInt(this@MainActivity.contentResolver, Settings.Secure.DEVELOPMENT_SETTINGS_ENABLED) == 1) {
-                if(locationChecker.isLocationEnabled()) {
-                    if(!locationChecker.checkLocationPermission())
-                        locationChecker.requestLocationPermission(this@MainActivity)
-                    else if(!isRunning) {
-                        createNotificationChannel()
-                        requestLocation()
-                    }
-                } else {
-                    val settingsIntent = Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
-                    this@MainActivity.startActivity(settingsIntent)
-                }
-            } else {
-                utilityProvider.toast("디버그 모드가 꺼져 있습니다")
-                finish()
-            }
-        } else {
-            utilityProvider.toast("해당 버전은 지원하지 않는 버전입니다")
-            finish()
-        }
-    }
-
-    private fun requestLocation() {
-        if(locationChecker.checkLocationPermission()) {
-            val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
-            fusedLocationProvider.lastLocation.addOnSuccessListener { location: Location? ->
-                location?.let {
-                    lat = "%.4f".format(it.latitude).toDouble()
-                    lon = "%.4f".format(it.longitude).toDouble()
-                    alt = "%.1f".format(it.altitude).toDouble()
-
-                    startService(serviceIntent)
-                } ?: run {
-                    utilityProvider.toast("현재 위치를 가져올 수 없습니다")
-                    startService(serviceIntent)
-                }
-            }
-        }
-    }
-
-    private fun searchLocation(keyword: String) {
-        // google map search
-    }
-
-    @RequiresApi(Build.VERSION_CODES.O)
-    private fun createNotificationChannel() {
-        if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU &&
-            ContextCompat.checkSelfPermission(this@MainActivity, Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-            this@MainActivity.requestPermissions(arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1)
-        } else {
-            val nm = this@MainActivity.getSystemService(NotificationManager::class.java)
-            val channel = NotificationChannel(
-                "gpster",
-                "gpster",
-                NotificationManager.IMPORTANCE_DEFAULT
-            )
-
-            nm.createNotificationChannel(channel)
-        }
-    }
-
-    override fun onStart() {
-        super.onStart()
-
-        setup()
-        locationInfoZoom()
-        locationInfoEdit()
-        locationSearch()
-        btnOverlay()
-    }
-
-    override fun onStop() {
-        super.onStop()
-        utilityProvider.setSpeed(speed)
-    }
-
-    override fun onResume() {
-        super.onResume()
-        checkDefault()
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
-        mBinding = null
-
-        if(isRunning) {
-            val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
-            stopService(serviceIntent)
         }
     }
 }

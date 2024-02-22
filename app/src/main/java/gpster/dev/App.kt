@@ -1,23 +1,24 @@
 package gpster.dev
 
 import android.app.Application
-import androidx.lifecycle.MutableLiveData
 
 class App : Application() {
     companion object {
-        var isRunning = MutableLiveData<Boolean>()
-        var isRunningOverlay = MutableLiveData<Boolean>()
+        const val CHANNEL_ID : String = "gpster"
+        const val NOTIFICATION_ID : Int = 1
 
-        var location = MutableLiveData<LocationModel>()
+        var isRunning : Boolean = false
+            set(value) { field = value }
+        var isRunningOverlay : Boolean = false
+            set(value) { field = value }
+
+        var lat : Double = 0.0
+            set(value) { field = value }
+        var lon : Double = 0.0
+            set(value) { field = value }
+        var alt : Double = 0.0
+            set(value) { field = value }
         var speed : Double = 0.0
-            set(value) = run { field = value }
-    }
-
-    override fun onCreate() {
-        super.onCreate()
-
-        isRunning.postValue(false)
-        isRunningOverlay.postValue(false)
-        location.postValue(LocationModel(0.0, 0.0, 0.0))
+            set(value) { field = value }
     }
 }

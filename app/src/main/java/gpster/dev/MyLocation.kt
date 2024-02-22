@@ -7,12 +7,7 @@ import android.app.Activity
 import android.location.Location
 import android.location.LocationManager
 import android.location.provider.ProviderProperties
-import android.os.Build
 import android.os.SystemClock
-import android.provider.Settings
-import android.util.Log
-import android.widget.Toast
-import androidx.annotation.RequiresApi
 import androidx.core.content.ContextCompat
 import java.lang.RuntimeException
 
@@ -71,10 +66,7 @@ class MyLocationChecker(
 
     fun requestLocationPermission(activity: Activity) {
         activity.requestPermissions(
-            arrayOf(
-                Manifest.permission.ACCESS_FINE_LOCATION,
-                Manifest.permission.ACCESS_COARSE_LOCATION
-            ), 0
+            arrayOf(Manifest.permission.ACCESS_FINE_LOCATION), 0
         )
     }
 }

@@ -24,6 +24,7 @@ class UtilityProvider(
             imm.hideSoftInputFromWindow(it.windowToken, 0)
         }
     }
+
     fun focusHandling(currentEt: EditText, nextEt: EditText?, activity: Activity?) {
         val listener = TextView.OnEditorActionListener { _, actionId, _ ->
             when(actionId) {
@@ -46,6 +47,7 @@ class UtilityProvider(
             et.setOnEditorActionListener(null)
         }
     }
+
     fun parseToDouble(s: String, min: Double, max: Double, def: Double, format: String) : Double {
         try {
             val num = s.toDoubleOrNull() ?: def
@@ -61,9 +63,10 @@ class UtilityProvider(
             return def
         }
     }
+
     fun getSpeed() : Double {
         val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
-        return prefs.getFloat("speed", 10.0f).toDouble()
+        return prefs.getFloat("speed", 20.0f).toDouble()
     }
     fun setSpeed(value: Double) {
         val prefs = context.getSharedPreferences("prefs", Context.MODE_PRIVATE)
