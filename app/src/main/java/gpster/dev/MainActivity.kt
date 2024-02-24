@@ -148,9 +148,9 @@ class MainActivity : AppCompatActivity() {
             val serviceIntent = Intent(this@MainActivity, VirtualLocationService::class.java)
             fusedLocationProvider.lastLocation.addOnSuccessListener { location: Location? ->
                 location?.let {
-                    App.lat = "%.4f".format(it.latitude).toDouble()
-                    App.lon = "%.4f".format(it.longitude).toDouble()
-                    App.alt = "%.1f".format(it.altitude).toDouble()
+                    App.lat = it.latitude
+                    App.lon = it.longitude
+                    App.alt = it.altitude
 
                     startService(serviceIntent)
                 } ?: run {
@@ -199,14 +199,18 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun locationInfo() {
+        val lat = "%.4f".format(App.lat)
+        val lon = "%.4f".format(App.lon)
+        val alt = "%.1f".format(App.alt)
+
         if(isExpanded) {
             binding.apply {
-                tvLat.setText(App.lat.toString())
-                tvLon.setText(App.lon.toString())
-                tvAlt.setText(App.alt.toString())
+                tvLat.setText(lat)
+                tvLon.setText(lon)
+                tvAlt.setText(alt)
             }
         } else {
-            binding.tvLat.setText("${App.lat}, ${App.lon}, ${App.alt}")
+            binding.tvLat.setText("${lat}, ${lon}, ${alt}")
         }
         binding.tvSpeed.setText("${App.speed} km/h")
     }
